@@ -31,8 +31,8 @@ Sebelum memulai, pastikan sudah menginstal:
 
 1.  **Clone repositori ini:**
     ```bash
-    git clone [https://github.com/username/nama-repositori.git](https://github.com/username/nama-repositori.git)
-    cd nama-repositori
+    git clone [https://github.com/Zawnr/searcheer-backend.git](https://github.com/Zawnr/searcheer-backend.git)
+    cd searcheer-backend
     ```
 
 2.  **Instal semua dependensi:**
