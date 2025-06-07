@@ -3,9 +3,29 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@hapi/hapi": "^21.4.0",
+    "@hapi/inert": "^7.1.0",
+    "@hapi/jwt": "^3.2.0",
+    "@hapi/vision": "^7.0.3",
+    "@supabase/supabase-js": "^2.49.10",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^16.5.0",
+    "hapi-swagger": "^17.3.2",
+    "joi": "^17.13.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.5.3"
+  }
 }

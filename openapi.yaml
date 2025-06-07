@@ -1,0 +1,226 @@
+openapi: 3.0.0
+info:
+  title: Searcheer API Contract
+  version: 1.0.0
+  description: API dari Backend Searcheer App untuk mengelola users, jobs, menyimpan CV dan menyimpan hasil analisis CV.
+
+# Menambahkan tag baru untuk mengelompokkan endpoint
+tags:
+  - name: Users
+    description: Operasi yang berkaitan dengan pengguna (registrasi, login)
+  - name: CVs
+    description: Operasi untuk mengelola CV pengguna
+  - name: Jobs
+    description: Operasi untuk melihat data pekerjaan
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  # --- Endpoint Pengguna (Users) ---
+  /users/register:
+    post:
+      tags:
+        - Users
+      summary: Registrasi pengguna baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+              required:
+                - username
+                - email
+                - password
+      responses:
+        '201':
+          description: Pengguna berhasil dibuat.
+        '409':
+          description: Email atau username sudah terdaftar (Conflict).
+
+  /users/login:
+    post:
+      tags:
+        - Users
+      summary: Login pengguna
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login berhasil, mengembalikan token JWT.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Kredensial tidak valid (Unauthorized).
+
+  # --- Endpoint CV ---
+  /cvs:
+    post:
+      tags:
+        - CVs
+      summary: Upload CV baru
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File CV dalam format PDF.
+              required:
+                - file
+      responses:
+        '201':
+          description: CV berhasil diunggah.
+        '400':
+          description: Request tidak valid (misal, bukan file PDF).
+        '401':
+          description: Tidak terautentikasi (token tidak ada atau tidak valid).
+
+  # --- Endpoint Pekerjaan (Jobs) ---
+  /jobs:
+    get:
+      tags:
+        - Jobs
+      summary: Dapatkan daftar pekerjaan dengan filter
+      description: Mengambil daftar pekerjaan yang tersedia. Endpoint ini publik dan mendukung filtering melalui query parameter.
+      security: [] # endpoint ini publik, tidak perlu token
+      parameters:
+        - name: employment_type
+          in: query
+          description: Filter berdasarkan tipe pekerjaan (e.g., "Full-time")
+          schema:
+            type: string
+        - name: required_experience
+          in: query
+          description: Filter berdasarkan pengalaman yang dibutuhkan (e.g., "Mid-Senior level")
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filter berdasarkan lokasi (pencarian parsial)
+          schema:
+            type: string
+        - name: function
+          in: query
+          description: Filter berdasarkan fungsi pekerjaan (e.g., "Engineering")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar pekerjaan berhasil diambil.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    job_id:
+                      type: integer
+                    title:
+                      type: string
+                    location:
+                      type: string
+                    industry:
+                      type: string
+                    salary_range:
+                      type: string
+                    employment_type:
+                      type: string
+        '500':
+          description: Internal Server Error.
+
+  /jobs/{id}:
+    get:
+      tags:
+        - Jobs
+      summary: Dapatkan detail pekerjaan berdasarkan ID
+      description: Mengambil semua detail untuk satu pekerjaan spesifik menggunakan job_id-nya.
+      security: [] # endpoint ini publik, tidak perlu token
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID unik dari pekerjaan yang ingin dilihat.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detail pekerjaan berhasil diambil.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: integer
+                  title:
+                    type: string
+                  location:
+                    type: string
+                  department:
+                    type: string
+                  salary_range:
+                    type: string
+                  company_profile:
+                    type: string
+                  description:
+                    type: string
+                  requirements:
+                    type: string
+                  benefits:
+                    type: string
+                  employment_type:
+                    type: string
+                  required_experience:
+                    type: string
+                  required_education:
+                    type: string
+                  industry:
+                    type: string
+                  function:
+                    type: string
+                  # ... dan kolom lainnya jika diperlukan ...
+        '404':
+          description: Pekerjaan dengan ID tersebut tidak ditemukan.
+        '500':
+          description: Internal Server Error.
