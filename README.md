@@ -4,19 +4,27 @@ Ini adalah layanan backend untuk aplikasi Analisis CV yang dibangun menggunakan 
 
 ## ✨ Fitur Utama
 
--   **Otentikasi Pengguna:** Registrasi dan Login aman menggunakan JSON Web Tokens (JWT).
+-   **Manajemen Pengguna:** Registrasi, Login, lihat & perbarui profil, serta ubah password.
 -   **Manajemen CV:** Upload file CV (format PDF) yang aman ke Supabase Storage.
 -   **API Jobs:** Mengambil daftar pekerjaan dari database dengan dukungan filtering dan mengambil detail pekerjaan berdasarkan ID.
+-   **Integrasi Machine Learning:**
+    -   Analisis sinkron antara CV dan deskripsi pekerjaan via API ML.
+    -   Menyimpan hasil analisis secara permanen di database.
+    -   Mendapatkan rekomendasi pekerjaan alternatif berdasarkan hasil analisis.
+-   **Riwayat Analisis:** Pengguna dapat melihat kembali semua riwayat analisis yang pernah dilakukan.
 -   **Dokumentasi API Interaktif:** Dokumentasi otomatis yang dibuat dengan Swagger UI untuk kemudahan testing dan pengembangan.
--   **Validasi:** Validasi request yang masuk menggunakan Joi untuk memastikan integritas data.
+-   **Keamanan & Validasi:** Validasi request yang masuk menggunakan Joi dan konfigurasi CORS.
+-   **Optimasi Database:** Penggunaan *indexing* pada kolom kunci untuk performa query yang cepat.
+
 
 ## 🛠️ Teknologi yang Digunakan
 
 -   **Backend:** Node.js, Hapi.js
 -   **Database & Storage:** Supabase (PostgreSQL, Supabase Storage)
 -   **Authentication:** JSON Web Tokens (@hapi/jwt)
--   **Validation:** Joi
--   **Documentation:** hapi-swagger
+-   **HTTP Client:** Axios
+-   **Validasi:** Joi
+-   **Dokumentasi:** hapi-swagger
 
 ## 🚀 Memulai Proyek
 
@@ -25,7 +33,9 @@ Ini adalah layanan backend untuk aplikasi Analisis CV yang dibangun menggunakan 
 Sebelum memulai, pastikan sudah menginstal:
 -   [Node.js](https://nodejs.org/) (disarankan versi LTS, misal: v18.x atau lebih baru)
 -   npm (biasanya sudah terinstal bersama Node.js)
+-   [Python](https://www.python.org/) (untuk menjalankan server ML)
 -   Memiliki akun [Supabase](https://supabase.com/) untuk membuat proyek database.
+-   Repositori layanan Machine Learning sudah di-clone dan di-setup sesuai petunjuk.
 
 ### Instalasi & Konfigurasi
 
@@ -41,41 +51,54 @@ Sebelum memulai, pastikan sudah menginstal:
     ```
 
 3.  **Konfigurasi Environment Variables:**
-    Buat file baru bernama `.env` di root proyek. Salin isi dari `.env.example` (jika ada) atau gunakan format di bawah ini dan isi nilainya sesuai dengan proyek Supabase Anda.
-
+    Buat file `.env` di root proyek dengan menyalin dari `env.example`. Isi semua nilainya.
+    ```bash
+    cp .env.example .env
+    ```
+    **Isi `.env`:**
     ```env
     # Konfigurasi Server
     PORT=3000
     HOST=localhost
 
-    # Kunci Rahasia JWT
+    # URL Frontend (untuk CORS di produksi)
+    FRONTEND_URL=http://localhost:3001
+    
+    # Kunci JWT
     JWT_SECRET=ganti_dengan_kunci_rahasia_acak_yang_sangat_panjang
 
     # Kredensial Supabase
     SUPABASE_URL=https://sdpccyzdkogsfjxtkbrs.supabase.co
     SUPABASE_SERVICE_KEY= tanya zawawi aja ya gess!
+
+    # URL API Machine Learning
+    ML_API_BASE_URL=http://localhost:8000
     ```
 
 4.  **Setup Database Supabase:**
     -   Buat proyek baru di Supabase.
-    -   Buat tabel `users`, `cvs`, dan `jobs` menggunakan SQL Editor sesuai skema yang telah kita rancang.
+    -   Gunakan **SQL Editor** untuk menjalankan perintah `CREATE TABLE` untuk tabel `users`, `jobs`, dan `cvs`.
     -   Impor data pekerjaan dari file `.csv` ke dalam tabel `jobs`.
-    -   Buat sebuah *Storage Bucket* bernama `cv-files` (private).
-    -   Pastikan Anda sudah membuat *Policies* untuk bucket storage agar file bisa diunggah dan diakses.
+    -   Jalankan perintah `CREATE TABLE` untuk `analysis_results`.
+    -   Jalankan perintah `CREATE INDEX` untuk optimasi.
+    -   Buat *Storage Bucket* bernama `cv-files` (private) dan atur *Policies*-nya.
 
 ### Menjalankan Aplikasi
 
--   **Mode Pengembangan (dengan auto-reload):**
+Untuk menjalankan fitur analisis, **kedua server (Backend dan ML) harus berjalan bersamaan** di dua terminal terpisah.
+
+1.  **Jalankan Backend Service (Hapi.js):**
     ```bash
     npm run dev
     ```
 
--   **Mode Produksi:**
+2.  **Jalankan Machine Learning Service (Python/FastAPI):**
+    (Buka terminal baru di direktori proyek ML Anda)
     ```bash
-    npm run start
+    python api.py
     ```
 
-Server akan berjalan di `http://localhost:3000`.
+Server backend akan berjalan di `http://localhost:3000`.
 
 ## 📚 Dokumentasi API
 
@@ -87,10 +110,20 @@ Anda bisa melihat semua endpoint, model data, dan bahkan mencoba API secara lang
 
 ## Endpoints Utama
 
-| Metode | Endpoint             | Deskripsi                                   | Auth? |
-| :----- | :------------------- | :------------------------------------------ | :---------- |
-| `POST` | `/users/register`    | Mendaftarkan pengguna baru.                 | Tidak       |
-| `POST` | `/users/login`       | Login untuk mendapatkan token JWT.          | Tidak       |
-| `POST` | `/cvs`               | Mengunggah file CV (PDF).                   | Ya (JWT)    |
-| `GET`  | `/jobs`              | Mendapatkan daftar pekerjaan (mendukung filter). | Tidak       |
-| `GET`  | `/jobs/{id}`         | Mendapatkan detail pekerjaan berdasarkan ID.  | Tidak       |
+## Endpoints Utama
+
+| Metode | Endpoint                                       | Deskripsi                                        | Otentikasi? |
+| :----- | :--------------------------------------------- | :----------------------------------------------- | :---------- |
+| `POST` | `/users/register`                              | Mendaftarkan pengguna baru.                      | Tidak       |
+| `POST` | `/users/login`                                 | Login untuk mendapatkan token JWT.               | Tidak       |
+| `GET`  | `/users/me`                                    | Mendapatkan profil pengguna yang login.          | **Ya** (JWT)    |
+| `PATCH`| `/users/me`                                    | Memperbarui profil (username).                   | **Ya** (JWT)    |
+| `PUT`  | `/users/me/password`                           | Mengubah password.                               | **Ya** (JWT)    |
+| `POST` | `/cvs`                                         | Mengunggah file CV (PDF).                        | **Ya** (JWT)    |
+| `POST` | `/cvs/{cvId}/analyze`                          | Memulai analisis CV terhadap deskripsi pekerjaan.  | **Ya** (JWT)    |
+| `GET`  | `/cvs/{cvId}/analysis-results`                 | Melihat semua riwayat analisis untuk sebuah CV.   | **Ya** (JWT)    |
+| `GET`  | `/analysis-results/{id}`                       | Melihat detail satu hasil analisis spesifik.     | **Ya** (JWT)    |
+| `GET`  | `/analysis-results/{id}/recommendations`       | Mendapatkan rekomendasi pekerjaan dari hasil analisis. | **Ya** (JWT)    |
+| `GET`  | `/jobs`                                        | Mendapatkan daftar pekerjaan (mendukung filter).  | Tidak       |
+| `GET`  | `/jobs/{id}`                                   | Mendapatkan detail pekerjaan berdasarkan ID.       | Tidak       |
+
