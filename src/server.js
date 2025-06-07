@@ -14,6 +14,7 @@ const init = async () => {
       cors: {
         // Ganti '*' dengan domain frontend untuk produksi
         origin: ['*'],
+        // origin: [process.env.FRONTEND_URL], //nanti diganti ke ini kalo sudah deploy
       },
     },
   });
@@ -65,6 +66,7 @@ const init = async () => {
     require('./api/users'),
     require('./api/cv'),
     require('./api/jobs'),
+    require('./api/analysis'),
   ]);
 
   // 4. mendftarkan plugin dokumentasi diakhir

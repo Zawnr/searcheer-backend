@@ -1,33 +1,22 @@
 const bcrypt = require('bcrypt');
 const supabase = require('../../lib/supabase');
+const Boom = require('@hapi/boom');
 
-/**
- * Menambahkan pengguna baru ke database
- */
 const addUser = async ({ email, password, username }) => {
-  // 1. Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  // 2. Masukkan ke Supabase
   const { data, error } = await supabase
     .from('users')
     .insert({ email, password: hashedPassword, username })
-    .select('id, email, username, created_at') 
+    .select('id, email, username, created_at')
     .single();
 
-  // 3. Handle error (misal: email duplikat)
   if (error) {
     throw new Error(error.message);
   }
-
   return data;
 };
 
-/**
- * Memverifikasi kredensial pengguna
- */
 const verifyUser = async ({ email, password }) => {
-  // 1. Cari pengguna berdasarkan email
   const { data: user, error } = await supabase
     .from('users')
     .select('id, email, password')
@@ -38,16 +27,77 @@ const verifyUser = async ({ email, password }) => {
     throw new Error('Kredensial tidak valid');
   }
 
-  // 2. Bandingkan password yang diberikan dengan hash di database
   const isPasswordValid = await bcrypt.compare(password, user.password);
-
   if (!isPasswordValid) {
     throw new Error('Kredensial tidak valid');
   }
 
-  // Hapus password dari objek sebelum dikembalikan
   delete user.password;
   return user;
 };
 
-module.exports = { addUser, verifyUser };
+const getUserById = async (userId) => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, email, username, created_at')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) {
+    throw new Error('PENGGUNA_TIDAK_DITEMUKAN');
+  }
+  return data;
+};
+
+const updateUsername = async ({ userId, newUsername }) => {
+  const { data, error } = await supabase
+    .from('users')
+    .update({ username: newUsername })
+    .eq('id', userId)
+    .select('id, email, username, created_at')
+    .single();
+  
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('USERNAME_SUDAH_DIGUNAKAN');
+    }
+    throw new Error('Gagal memperbarui username.');
+  }
+  return data;
+};
+
+const changeUserPassword = async ({ userId, oldPassword, newPassword }) => {
+  // 1. Ambil data pengguna, TERMASUK hash password saat ini dari DB
+  const { data: user, error: fetchError } = await supabase
+    .from('users')
+    .select('id, password')
+    .eq('id', userId)
+    .single();
+  
+  if (fetchError || !user) {
+    throw new Error('PENGGUNA_TIDAK_DITEMUKAN');
+  }
+
+  // 2. Verifikasi apakah password lama yang dimasukkan pengguna cocok
+  const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+  if (!isOldPasswordValid) {
+    throw new Error('PASSWORD_LAMA_SALAH');
+  }
+
+  // 3. Jika valid, hash password yang baru
+  const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // 4. Update password di database dengan hash yang baru
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({ password: newHashedPassword })
+    .eq('id', userId);
+  
+  if (updateError) {
+    throw new Error('Gagal memperbarui password di database.');
+  }
+
+  return { message: 'Password berhasil diperbarui.' };
+};
+
+module.exports = { addUser, verifyUser, getUserById, updateUsername, changeUserPassword };
