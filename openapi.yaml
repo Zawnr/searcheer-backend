@@ -12,6 +12,8 @@ tags:
     description: Operasi untuk mengelola CV pengguna
   - name: Jobs
     description: Operasi untuk melihat data pekerjaan
+  - name: Analysis 
+    description: Operasi untuk menjalankan analisis CV
 
 components:
   securitySchemes:
@@ -86,6 +88,77 @@ paths:
         '401':
           description: Kredensial tidak valid (Unauthorized).
 
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Dapatkan profil saya
+      description: Mengambil detail profil dari pengguna yang sedang login.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profil pengguna berhasil diambil.
+        '401':
+          description: Unauthorized.
+    patch:
+      tags:
+        - Users
+      summary: Perbarui profil saya
+      description: Memperbarui username dari pengguna yang sedang login.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: username_baru
+      responses:
+        '200':
+          description: Profil berhasil diperbarui.
+        '400':
+          description: Bad Request (input tidak valid).
+        '401':
+          description: Unauthorized.
+        '409':
+          description: Conflict (username sudah digunakan).
+  /users/me/password:
+    put:
+      tags:
+        - Users
+      summary: Ubah password saya
+      description: Mengubah password pengguna yang sedang login setelah verifikasi password lama.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  format: password
+                newPassword:
+                  type: string
+                  format: password
+                confirmNewPassword:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Password berhasil diubah.
+        '400':
+          description: Bad Request (password lama salah atau konfirmasi tidak cocok).
+        '401':
+          description: Unauthorized.
+
   # --- Endpoint CV ---
   /cvs:
     post:
@@ -115,6 +188,81 @@ paths:
         '401':
           description: Tidak terautentikasi (token tidak ada atau tidak valid).
 
+  # --- Endpoint Analisis  ---
+  /cvs/{cvId}/analyze:
+    post:
+      tags:
+        - Analysis
+      summary: Mulai Analisis CV terhadap Pekerjaan
+      # ... (definisi tidak berubah)
+  /cvs/{cvId}/analysis-results:
+    get:
+      tags:
+        - Analysis
+      summary: Dapatkan semua riwayat analisis untuk sebuah CV
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cvId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil mengambil daftar riwayat analisis.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden (tidak punya akses ke CV ini).
+        '404':
+          description: Not Found (CV tidak ditemukan).
+  /analysis-results/{id}:
+    get:
+      tags:
+        - Analysis
+      summary: Dapatkan detail dari satu hasil analisis
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil mengambil detail hasil analisis.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        '404':
+          description: Not Found.
+  /analysis-results/{id}/recommendations:
+    get:
+      tags:
+        - Analysis
+      summary: Dapatkan rekomendasi pekerjaan berdasarkan hasil analisis
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil mengambil daftar rekomendasi pekerjaan.
+        '400':
+          description: Bad Request (misal, cv_text tidak ditemukan).
+        '401':
+          description: Unauthorized.
+          
   # --- Endpoint Pekerjaan (Jobs) ---
   /jobs:
     get:
