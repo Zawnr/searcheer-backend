@@ -5,7 +5,7 @@ const getAllJobs = async (filters) => {
   let query = supabase
     .from('jobs')
     .select('job_id, title, location, industry, salary_range, employment_type')
-    .eq('fraudulent', false); // Hanya tampilkan pekerjaan yang tidak palsu
+    .eq('fraudulent', false);
 
   // Terapkan filter jika ada
   if (filters.employment_type) {
@@ -22,8 +22,8 @@ const getAllJobs = async (filters) => {
     query = query.eq('function', filters.function);
   }
 
-  // Tambahkan limit dan urutan
-  query = query.limit(50); // Batasi hasil agar tidak terlalu banyak
+  // menambahkan limit dan urutan
+  query = query.limit(50);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -33,10 +33,10 @@ const getAllJobs = async (filters) => {
 const getJobById = async (jobId) => {
   const { data, error } = await supabase
     .from('jobs')
-    .select('*') // Ambil semua detail untuk halaman detail
+    .select('*') 
     .eq('job_id', jobId)
     .eq('fraudulent', false)
-    .single(); // Ambil satu baris saja
+    .single(); 
 
   if (error) throw new Error(error.message);
   return data;

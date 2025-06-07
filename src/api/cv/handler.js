@@ -4,7 +4,7 @@ const { uploadCvService } = require('./service');
 const uploadCvHandler = async (request, h) => {
   try {
     const { file } = request.payload;
-    // Ambil ID pengguna dari kredensial token JWT yang sudah divalidasi
+    // mengambil ID pengguna dari kredensial token JWT yang sudah divalidasi
     const userId = request.auth.credentials.user.id;
 
     if (!file) {

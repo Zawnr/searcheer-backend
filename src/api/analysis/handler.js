@@ -1,4 +1,3 @@
-// src/api/analysis/handler.js
 const { startAnalysisService, getAnalysisResultById, getAllResultsByCvId } = require('./service');
 const Boom = require('@hapi/boom');
 const { getJobRecommendations } = require('./service'); 

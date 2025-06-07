@@ -6,7 +6,7 @@ const uploadCvService = async ({ file, userId }) => {
 
   // 1. Upload file ke Supabase Storage
   const { error: uploadError } = await supabase.storage
-    .from('cv-files') // Nama bucket kita
+    .from('cv-files')
     .upload(filePath, file, {
       contentType: 'application/pdf',
       upsert: false,
@@ -29,7 +29,7 @@ const uploadCvService = async ({ file, userId }) => {
 
   if (dbError) {
     console.error('Supabase db error:', dbError);
-    // Jika terjadi error, coba hapus file yang sudah terlanjur di-upload
+    // Jika terjadi error, menghapus file yang sudah terlanjur di-upload
     await supabase.storage.from('cv-files').remove([filePath]);
     throw new Error('Gagal menyimpan data CV.');
   }

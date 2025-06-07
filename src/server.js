@@ -24,7 +24,7 @@ const init = async () => {
       title: 'Searcheer API Documentation',
       version: '1.0.0',
     },
-    // mendefinisikan skema keamanan agar tombol 'Authorize' ada
+    // mendefinisikan skema keamanan agar tombol 'Authorize' muncul
     securityDefinitions: {
       bearerAuth: {
         type: 'apiKey',
@@ -36,10 +36,10 @@ const init = async () => {
 
   };
 
-  // 1. mendaftarkan plugin PRASYARAT (Inert, Vision, Jwt)
+  // 1. mendaftarkan plugin(Inert, Vision, Jwt)
   await server.register([Inert, Vision, Jwt]);
 
-  // 2. mendefinisikan STRATEGI otentikasi
+  // 2. mendefinisikan STRATEGI auth
   server.auth.strategy('jwt_strategy', 'jwt', {
     keys: process.env.JWT_SECRET,
     verify: {
