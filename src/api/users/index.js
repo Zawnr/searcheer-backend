@@ -73,7 +73,7 @@ exports.plugin = {
           payload: Joi.object({
             oldPassword: Joi.string().required(),
             newPassword: Joi.string().min(6).required()
-              .disallow(Joi.ref('oldPassword')), // Pastikan password baru tidak sama dengan yg lama
+              .disallow(Joi.ref('oldPassword')), 
             confirmNewPassword: Joi.any().equal(Joi.ref('newPassword')).required()
               .label('Confirm password')
               .messages({ 'any.only': 'Konfirmasi password tidak cocok dengan password baru.' }),

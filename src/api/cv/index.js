@@ -11,7 +11,7 @@ exports.plugin = {
       handler: uploadCvHandler,
       options: {
         auth: 'jwt_strategy',
-        tags: ['api', 'CVs'], // <-- TAMBAHKAN BARIS INI
+        tags: ['api', 'CVs'],
         description: 'Upload CV baru oleh pengguna terautentikasi',
         payload: {
           output: 'data',

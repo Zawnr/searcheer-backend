@@ -1,4 +1,3 @@
-// src/api/jobs/index.js
 const Joi = require('joi');
 const { getAllJobsHandler, getJobByIdHandler } = require('./handler');
 
@@ -12,7 +11,7 @@ exports.plugin = {
       handler: getAllJobsHandler,
       options: {
         auth: false,
-        tags: ['api', 'Jobs'], // <-- TAMBAHKAN BARIS INI
+        tags: ['api', 'Jobs'], 
         description: 'Dapatkan daftar pekerjaan dengan filter',
         notes: 'Mengambil daftar pekerjaan yang tersedia. Mendukung filtering melalui query parameter.',
         validate: {
@@ -32,7 +31,7 @@ exports.plugin = {
       handler: getJobByIdHandler,
       options: {
         auth: false,
-        tags: ['api', 'Jobs'], // <-- TAMBAHKAN BARIS INI
+        tags: ['api', 'Jobs'], //
         description: 'Dapatkan detail pekerjaan berdasarkan ID',
         notes: 'Mengambil semua detail untuk satu pekerjaan spesifik menggunakan job_id-nya.',
         validate: {
