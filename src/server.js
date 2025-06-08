@@ -9,12 +9,13 @@ const Jwt = require('@hapi/jwt');
 const init = async () => {
   const server = Hapi.server({
     port: process.env.PORT || 3000,
-    host: process.env.HOST || 'localhost',
+    host: process.env.HOST || '0.0.0.0',
     routes: {
       cors: {
         // Ganti '*' dengan domain frontend untuk produksi
-        origin: ['*'],
-        // origin: [process.env.FRONTEND_URL], //nanti diganti ke ini kalo sudah deploy
+        // origin: ['*'],
+        //nanti diganti ke ini kalo sudah deploy
+        origin: [process.env.FRONTEND_URL],
       },
     },
   });
