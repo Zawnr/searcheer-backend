@@ -13,9 +13,9 @@ const init = async () => {
     routes: {
       cors: {
         // Ganti '*' dengan domain frontend untuk produksi
-        // origin: ['*'],
+        origin: ['*'],
         //nanti diganti ke ini kalo sudah deploy
-        origin: [process.env.FRONTEND_URL],
+        // origin: [process.env.FRONTEND_URL],
       },
     },
   });
