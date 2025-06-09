@@ -31,6 +31,12 @@ exports.plugin = {
         auth: false,
         tags: ['api', 'Users'],
         description: 'Login pengguna untuk mendapatkan token JWT',
+        validate: {
+          payload: Joi.object({
+            email: Joi.string().email().required(),
+            password: Joi.string().required(),
+          }),
+        },
       },
     });
 
@@ -42,6 +48,14 @@ exports.plugin = {
         auth: 'jwt_strategy',
         tags: ['api', 'Users'],
         description: 'Mendapatkan profil dari pengguna yang sedang login.',
+        response: { 
+          schema: Joi.object({ 
+            id: Joi.string().uuid(),
+            username: Joi.string(),
+            email: Joi.string().email(),
+            created_at: Joi.date().iso(),
+          }).label('UserProfileResponse'),
+        },
       },
     });
 
@@ -77,6 +91,10 @@ exports.plugin = {
             confirmNewPassword: Joi.any().equal(Joi.ref('newPassword')).required()
               .label('Confirm password')
               .messages({ 'any.only': 'Konfirmasi password tidak cocok dengan password baru.' }),
+          }).example({ 
+            oldPassword: "password_lama_anda",
+            newPassword: "PasswordBaru123!",
+            confirmNewPassword: "PasswordBaru123!"
           }),
         },
       },

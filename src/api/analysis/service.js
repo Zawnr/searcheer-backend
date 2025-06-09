@@ -41,8 +41,15 @@ const startAnalysisService = async ({ cvId, userId, jobTitle, jobDescription }) 
     const mlApiUrl = `${process.env.ML_API_BASE_URL}/api/analyze/cv-with-job`;
     mlResponse = await axios.post(mlApiUrl, formData, { headers: formData.getHeaders() });
   } catch (error) {
-    console.error('Error saat memanggil API ML:', error.response ? error.response.data : error.message);
-    throw Boom.badGateway('Layanan analisis sedang tidak tersedia atau terjadi kesalahan.');
+    if (error.response) {
+      // API ML merespons dengan status error
+      console.error('API ML merespons dengan error:', error.response.data);
+      // Teruskan pesan error dari ML ke pengguna, dibungkus dalam error 400 dari sisi backend
+      throw Boom.badRequest('Analisis gagal karena input tidak valid dari layanan ML.', error.response.data.errors);
+    }
+    // Error jaringan atau API ML tidak bisa dihubungi sama sekali
+    console.error('Error jaringan saat memanggil API ML:', error.message);
+    throw Boom.badGateway('Layanan analisis sedang tidak tersedia atau terjadi kesalahan jaringan.');
   }
 
   const analysisResult = mlResponse.data;
