@@ -21,6 +21,9 @@ exports.plugin = {
           payload: Joi.object({
             job_title: Joi.string().min(5).required(),
             job_description: Joi.string().min(20).required(),
+          }).example({ 
+            job_title: "Backend Developer",
+            job_description: "Membangun dan memelihara layanan backend, terhubung dengan database, dan membuat API yang handal"
           }),
         },
       },

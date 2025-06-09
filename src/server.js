@@ -34,7 +34,7 @@ const init = async () => {
         description: "Enter 'Bearer' [space] and then your token.",
       },
     },
-
+    security: [{ bearerAuth: [] }],
   };
 
   // 1. mendaftarkan plugin(Inert, Vision, Jwt)

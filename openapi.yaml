@@ -1,26 +1,289 @@
-openapi: 3.0.0
 info:
   title: Searcheer API Contract
   version: 1.0.0
   description: API dari Backend Searcheer App untuk mengelola users, jobs, menyimpan CV dan menyimpan hasil analisis CV.
 
-# Menambahkan tag baru untuk mengelompokkan endpoint
+  contact:
+    name: "Searcheer Back-end Team"
+    email: "rochmat27nurza@gmail.com"
+    url: "https://github.com/Zawnr/searcheer-backend.git"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
 tags:
   - name: Users
-    description: Operasi yang berkaitan dengan pengguna (registrasi, login)
+    description: Operasi yang berkaitan dengan pengguna (registrasi, login, profil)
   - name: CVs
     description: Operasi untuk mengelola CV pengguna
   - name: Jobs
     description: Operasi untuk melihat data pekerjaan
   - name: Analysis 
-    description: Operasi untuk menjalankan analisis CV
+    description: Operasi untuk menjalankan dan melihat hasil analisis CV
 
 components:
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "johndoe@example.com"
+        created_at:
+          type: string
+          format: date-time
+    
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login berhasil"
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi..."
+
+    RegisterUserRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          example: "newuser123"
+        email:
+          type: string
+          format: email
+          example: "newuser@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: "strongpassword123"
+
+    UpdateProfileRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          example: "my_new_username"
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+        - confirmNewPassword
+      properties:
+        oldPassword:
+          type: string
+          format: password
+          example: "password_lama_123"
+        newPassword:
+          type: string
+          format: password
+          example: "PasswordBaruSuperAman!@#"
+        confirmNewPassword:
+          type: string
+          format: password
+          example: "PasswordBaruSuperAman!@#"
+
+    SuccessMessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operasi berhasil diselesaikan."
+
+    CV:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+        user_id:
+          type: string
+          format: uuid
+          example: "f1g2h3i4-j5k6-7l8m-9n0o-p1q2r3s4t5u6"
+        file_path:
+          type: string
+          example: "public/f1g2h3i4-j5k6-7l8m-9n0o-p1q2r3s4t5u6-1678886400000.pdf"
+        status:
+          type: string
+          example: "uploaded"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - statusCode
+        - error
+        - message
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        error:
+          type: string
+          example: "Not Found"
+        message:
+          type: string
+          example: "Resource yang diminta tidak ditemukan."
+
+    StartAnalysisRequest:
+      type: object
+      required:
+        - job_title
+        - job_description
+      properties:
+        job_title:
+          type: string
+          example: "Senior Backend Engineer"
+        job_description:
+          type: string
+          example: "We are looking for a backend engineer with experience in Node.js and cloud services..."
+
+    AnalysisResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cv_id:
+          type: string
+          format: uuid
+        analyzed_job_title:
+          type: string
+        analyzed_job_description:
+          type: string
+        cv_text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        result_data: # object JSONB yang kompleks
+          type: object
+          properties:
+            cv_analysis:
+              type: object
+              properties:
+                ats_score:
+                  type: number
+                  format: float
+                word_count:
+                  type: integer
+            compatibility_analysis:
+              type: object
+              properties:
+                overall_score:
+                  type: number
+                  format: float
+                text_similarity:
+                  type: number
+                  format: float
+                skill_match:
+                  type: number
+                  format: float
+                # ... dan semua field lain dari hasil ML
+    
+    JobRecommendation:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        title:
+          type: string
+        location:
+          type: string
+        industry:
+          type: string
+        salary_range:
+          type: string
+        employment_type:
+          type: string
+        compatibility_score:
+          type: number
+          format: float
+
+    JobSummary:
+      type: object
+      properties:
+        job_id:
+          type: integer
+          example: 17830
+        title:
+          type: string
+          example: "Data Scientist"
+        location:
+          type: string
+          example: "US, NY, New York"
+        industry:
+          type: string
+          example: "Information Technology"
+        salary_range:
+          type: string
+          example: "50000-60000"
+        employment_type:
+          type: string
+          example: "Full-time"
+
+    JobDetail:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        title:
+          type: string
+        location:
+          type: string
+        department:
+          type: string
+        salary_range:
+          type: string
+        company_profile:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: string
+        benefits:
+          type: string
+        employment_type:
+          type: string
+        required_experience:
+          type: string
+        required_education:
+          type: string
+        industry:
+          type: string
+        function:
+          type: string
+
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: "Masukkan token JWT dengan format 'Bearer {token}' untuk mengakses endpoint terproteksi."
 
 paths:
   # --- Endpoint Pengguna (Users) ---
@@ -29,38 +292,42 @@ paths:
       tags:
         - Users
       summary: Registrasi pengguna baru
+      description: Mendaftarkan pengguna baru dengan username, email, dan password. Respons yang berhasil akan mengembalikan profil pengguna yang baru dibuat.
       requestBody:
+        description: Data pengguna baru yang akan didaftarkan.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  minLength: 3
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  minLength: 6
-              required:
-                - username
-                - email
-                - password
+              $ref: '#/components/schemas/RegisterUserRequest' 
       responses:
         '201':
           description: Pengguna berhasil dibuat.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile' 
+        '400':
+          description: Bad Request, input tidak valid (misal: password terlalu pendek).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'  
         '409':
           description: Email atau username sudah terdaftar (Conflict).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
 
-  /users/login:
+/users/login:
     post:
       tags:
         - Users
       summary: Login pengguna
+      description: Login pengguna untuk mendapatkan token JWT otentikasi.
       requestBody:
+        description: Kredensial pengguna untuk login.
         required: true
         content:
           application/json:
@@ -70,8 +337,11 @@ paths:
                 email:
                   type: string
                   format: email
+                  example: "testuser@example.com"
                 password:
                   type: string
+                  format: password
+                  example: "password123"
               required:
                 - email
                 - password
@@ -81,83 +351,109 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
+                $ref: '#/components/schemas/LoginResponse'
         '401':
           description: Kredensial tidak valid (Unauthorized).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /users/me:
     get:
       tags:
         - Users
       summary: Dapatkan profil saya
-      description: Mengambil detail profil dari pengguna yang sedang login.
+      description: Mengambil detail profil dari pengguna yang sedang login. Membutuhkan token Authentification.
       security:
         - bearerAuth: []
       responses:
         '200':
           description: Profil pengguna berhasil diambil.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
         '401':
           description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     patch:
       tags:
         - Users
       summary: Perbarui profil saya
-      description: Memperbarui username dari pengguna yang sedang login.
+      description: Memperbarui username dari pengguna yang sedang login. Membutuhkan token Authentification.
       security:
         - bearerAuth: []
       requestBody:
+        description: Data baru untuk username.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: username_baru
+              $ref: '#/components/schemas/UpdateProfileRequest'
       responses:
         '200':
           description: Profil berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile' 
         '400':
           description: Bad Request (input tidak valid).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
           description: Conflict (username sudah digunakan).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /users/me/password:
     put:
       tags:
         - Users
       summary: Ubah password saya
-      description: Mengubah password pengguna yang sedang login setelah verifikasi password lama.
+      description: Mengubah password pengguna yang sedang login setelah verifikasi password lama. Membutuhkan konfirmasi password baru.
       security:
         - bearerAuth: []
       requestBody:
+        description: Kredensial password lama dan baru.
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                oldPassword:
-                  type: string
-                  format: password
-                newPassword:
-                  type: string
-                  format: password
-                confirmNewPassword:
-                  type: string
-                  format: password
+              $ref: '#/components/schemas/ChangePasswordRequest' 
       responses:
         '200':
           description: Password berhasil diubah.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
         '400':
           description: Bad Request (password lama salah atau konfirmasi tidak cocok).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
         '401':
           description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # --- Endpoint CV ---
   /cvs:
@@ -165,6 +461,7 @@ paths:
       tags:
         - CVs
       summary: Upload CV baru
+      description: Mengunggah file CV (hanya PDF) oleh pengguna terautentikasi. Respons akan berisi metadata dari file yang baru diunggah.
       security:
         - bearerAuth: []
       requestBody:
@@ -182,87 +479,188 @@ paths:
                 - file
       responses:
         '201':
-          description: CV berhasil diunggah.
+          description: CV berhasil diunggah dan data tersimpan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: "CV berhasil diungah."
+                  data:
+                    $ref: '#/components/schemas/CV' 
         '400':
-          description: Request tidak valid (misal, bukan file PDF).
+          description: Request tidak valid (misal, bukan file PDF atau file terlalu besar).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Tidak terautentikasi (token tidak ada atau tidak valid).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-  # --- Endpoint Analisis  ---
+  # --- Endpoint Analisis ---
   /cvs/{cvId}/analyze:
     post:
       tags:
         - Analysis
-      summary: Mulai Analisis CV terhadap Pekerjaan
-      # ... (definisi tidak berubah)
-  /cvs/{cvId}/analysis-results:
-    get:
-      tags:
-        - Analysis
-      summary: Dapatkan semua riwayat analisis untuk sebuah CV
+      summary: Memulai Analisis CV terhadap Pekerjaan
+      description: Menjalankan proses analisis sinkron untuk sebuah CV yang sudah diunggah terhadap deskripsi pekerjaan yang diinput manual. Membutuhkan Authentification.
       security:
         - bearerAuth: []
       parameters:
         - name: cvId
           in: path
           required: true
+          description: ID dari CV yang akan dianalisis.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Detail pekerjaan yang akan dianalisis.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartAnalysisRequest'
+      responses:
+        '200':
+          description: Analisis berhasil diselesaikan dan hasilnya disimpan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: "Analisis berhasil diselesaikan."
+                  data:
+                    $ref: '#/components/schemas/AnalysisResult'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (tidak punya akses ke CV ini).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (CV tidak ditemukan).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict (CV ini sudah pernah dianalisis untuk pekerjaan ini).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: Bad Gateway (Layanan analisis ML tidak tersedia atau gagal).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cvs/{cvId}/analysis-results:
+    get:
+      tags:
+        - Analysis
+      summary: Dapatkan semua riwayat analisis untuk sebuah CV
+      description: Mengambil daftar semua hasil analisis yang pernah dilakukan pada sebuah CV spesifik.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cvId
+          in: path
+          required: true
+          description: ID dari CV yang riwayatnya ingin dilihat.
           schema:
             type: string
             format: uuid
       responses:
         '200':
           description: Berhasil mengambil daftar riwayat analisis.
-        '401':
-          description: Unauthorized.
-        '403':
-          description: Forbidden (tidak punya akses ke CV ini).
-        '404':
-          description: Not Found (CV tidak ditemukan).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnalysisResult'
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+
   /analysis-results/{id}:
     get:
       tags:
         - Analysis
       summary: Dapatkan detail dari satu hasil analisis
+      description: Mengambil detail lengkap dari satu hasil analisis spesifik berdasarkan ID-nya.
       security:
         - bearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
+          description: ID unik dari hasil analisis.
           schema:
             type: string
             format: uuid
       responses:
         '200':
           description: Berhasil mengambil detail hasil analisis.
-        '401':
-          description: Unauthorized.
-        '403':
-          description: Forbidden.
-        '404':
-          description: Not Found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResult'
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        
   /analysis-results/{id}/recommendations:
     get:
       tags:
         - Analysis
-      summary: Dapatkan rekomendasi pekerjaan berdasarkan hasil analisis
+      summary: Dapatkan rekomendasi pekerjaan
+      description: Mendapatkan rekomendasi pekerjaan alternatif berdasarkan sebuah hasil analisis yang sudah ada.
       security:
         - bearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
+          description: ID unik dari hasil analisis yang akan digunakan sebagai dasar rekomendasi.
           schema:
             type: string
             format: uuid
       responses:
         '200':
           description: Berhasil mengambil daftar rekomendasi pekerjaan.
-        '400':
-          description: Bad Request (misal, cv_text tidak ditemukan).
-        '401':
-          description: Unauthorized.
-          
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobRecommendation'
+        '400': { $ref: '#/components/responses/BadRequestError' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+
   # --- Endpoint Pekerjaan (Jobs) ---
   /jobs:
     get:
@@ -270,7 +668,7 @@ paths:
         - Jobs
       summary: Dapatkan daftar pekerjaan dengan filter
       description: Mengambil daftar pekerjaan yang tersedia. Endpoint ini publik dan mendukung filtering melalui query parameter.
-      security: [] # endpoint ini publik, tidak perlu token
+      security: []
       parameters:
         - name: employment_type
           in: query
@@ -300,22 +698,13 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    job_id:
-                      type: integer
-                    title:
-                      type: string
-                    location:
-                      type: string
-                    industry:
-                      type: string
-                    salary_range:
-                      type: string
-                    employment_type:
-                      type: string
+                  $ref: '#/components/schemas/JobSummary' 
         '500':
           description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
 
   /jobs/{id}:
     get:
@@ -323,7 +712,7 @@ paths:
         - Jobs
       summary: Dapatkan detail pekerjaan berdasarkan ID
       description: Mengambil semua detail untuk satu pekerjaan spesifik menggunakan job_id-nya.
-      security: [] # endpoint ini publik, tidak perlu token
+      security: []
       parameters:
         - name: id
           in: path
@@ -331,44 +720,23 @@ paths:
           description: ID unik dari pekerjaan yang ingin dilihat.
           schema:
             type: integer
+            example: 17830
       responses:
         '200':
           description: Detail pekerjaan berhasil diambil.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  job_id:
-                    type: integer
-                  title:
-                    type: string
-                  location:
-                    type: string
-                  department:
-                    type: string
-                  salary_range:
-                    type: string
-                  company_profile:
-                    type: string
-                  description:
-                    type: string
-                  requirements:
-                    type: string
-                  benefits:
-                    type: string
-                  employment_type:
-                    type: string
-                  required_experience:
-                    type: string
-                  required_education:
-                    type: string
-                  industry:
-                    type: string
-                  function:
-                    type: string
-                  # ... dan kolom lainnya jika diperlukan ...
+                $ref: '#/components/schemas/JobDetail'
         '404':
           description: Pekerjaan dengan ID tersebut tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
