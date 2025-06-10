@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log("JWT Secret yang terbaca oleh server:", process.env.JWT_SECRET);
 
 const Hapi = require('@hapi/hapi');
 const Inert = require('@hapi/inert');

@@ -84,17 +84,13 @@ components:
     ChangePasswordRequest:
       type: object
       required:
-        - oldPassword
         - newPassword
         - confirmNewPassword
       properties:
-        oldPassword:
-          type: string
-          format: password
-          example: "password_lama_123"
         newPassword:
           type: string
           format: password
+          minLength: 6
           example: "PasswordBaruSuperAman!@#"
         confirmNewPassword:
           type: string
@@ -359,12 +355,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /users/me:
+/users/me:
     get:
       tags:
         - Users
       summary: Dapatkan profil saya
-      description: Mengambil detail profil dari pengguna yang sedang login. Membutuhkan token Authentification.
+      description: Mengambil detail profil dari pengguna yang sedang login. Membutuhkan token otentikasi.
       security:
         - bearerAuth: []
       responses:
@@ -375,11 +371,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserProfile'
         '401':
-          description: Unauthorized.
+          description: Unauthorized (token tidak valid atau tidak ada).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (profil pengguna tidak ditemukan di database).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
     patch:
       tags:
         - Users
@@ -420,21 +423,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /users/me/password:
+/users/me/password:
     put:
       tags:
         - Users
       summary: Ubah password saya
-      description: Mengubah password pengguna yang sedang login setelah verifikasi password lama. Membutuhkan konfirmasi password baru.
+      description: |-
+        Mengubah password pengguna yang sedang login. 
+        Fitur ini tidak memerlukan password lama karena otorisasi untuk mengubah sudah diverifikasi melalui Token JWT yang valid.
       security:
         - bearerAuth: []
       requestBody:
-        description: Kredensial password lama dan baru.
+        description: Masukkan password baru dan konfirmasinya.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ChangePasswordRequest' 
+              $ref: '#/components/schemas/ChangePasswordRequest'
       responses:
         '200':
           description: Password berhasil diubah.
@@ -443,13 +448,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessMessageResponse'
         '400':
-          description: Bad Request (password lama salah atau konfirmasi tidak cocok).
+          description: Bad Request (misal: password baru terlalu lemah atau konfirmasi tidak cocok).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error' 
+                $ref: '#/components/schemas/Error'
         '401':
-          description: Unauthorized.
+          description: Unauthorized (token tidak valid atau tidak ada).
           content:
             application/json:
               schema:
