@@ -20,41 +20,57 @@ const loginUserHandler = async (request, h) => {
   try {
     const { email, password } = request.payload;
     const user = await verifyUser({ email, password });
+
     const token = jwt.token.generate(
       {
         aud: 'urn:audience:test',
         iss: 'urn:issuer:test',
-        user: { id: user.id, email: user.email },
+        user: { 
+          id: user.id,
+          email: user.email,
+          username: user.username,
+        },
       },
       { key: process.env.JWT_SECRET, algorithm: 'HS256' },
       { ttlSec: 14400 }
     );
     return h.response({ message: 'Login berhasil', token }).code(200);
   } catch (error) {
-    return Boom.unauthorized(error.message);
+    if (error.isBoom) return error;
+    return Boom.unauthorized("Email atau password salah.");
   }
 };
 
 const getMyProfileHandler = async (request, h) => {
-  try {
-    const userId = request.auth.credentials.user.id;
-    const profile = await getUserById(userId);
-    return h.response(profile).code(200);
-  } catch (error) {
-    if (error.message === 'PENGGUNA_TIDAK_DITEMUKAN') {
-      return Boom.notFound('Pengguna tidak ditemukan.');
-    }
-    console.error('Get profile error:', error);
-    return Boom.internal('Gagal mengambil profil.');
-  }
+  // Tidak perlu lagi try-catch atau memanggil service.
+  // Semua data yang kita butuhkan sudah ada di dalam token yang divalidasi.
+  const userProfileFromToken = request.auth.credentials.user;
+
+  // Kita hanya perlu mengembalikan data tersebut.
+  return h.response({
+    id: userProfileFromToken.id,
+    email: userProfileFromToken.email,
+    username: userProfileFromToken.username,
+  }).code(200);
 };
 
 const updateMyProfileHandler = async (request, h) => {
   try {
-    const userId = request.auth.credentials.user.id;
-    const { username } = request.payload;
-    const updatedProfile = await updateUsername({ userId, newUsername: username });
-    return h.response(updatedProfile).code(200);
+    const { id: userId, email: userEmail } = request.auth.credentials.user;
+    const { username: newUsername } = request.payload;
+
+    // Panggil service yang hanya mengembalikan data dari tabel 'users'
+    const updatedProfileData = await updateUsername({ userId, newUsername });
+
+    // Rakit respons lengkap dengan data dari token dan hasil service
+    const fullUpdatedProfile = {
+      id: updatedProfileData.id,
+      username: updatedProfileData.username,
+      email: userEmail, 
+      created_at: updatedProfileData.created_at,
+    };
+
+    return h.response(fullUpdatedProfile).code(200);
   } catch (error) {
     if (error.message === 'USERNAME_SUDAH_DIGUNAKAN') {
       return Boom.conflict('Username tersebut sudah digunakan.');
@@ -67,17 +83,14 @@ const updateMyProfileHandler = async (request, h) => {
 const changePasswordHandler = async (request, h) => {
   try {
     const userId = request.auth.credentials.user.id;
-    const { oldPassword, newPassword } = request.payload;
+    const { newPassword } = request.payload;
     
-    await changeUserPassword({ userId, oldPassword, newPassword });
+    await changeUserPassword({ userId, newPassword });
 
     return h.response({ message: 'Password berhasil diubah' }).code(200);
-  } catch (error) {
-    if (error.message === 'PASSWORD_LAMA_SALAH') {
-      return Boom.badRequest('Password lama yang Anda masukkan salah.');
-    }
-    if (error.message === 'PENGGUNA_TIDAK_DITEMUKAN') {
-      return Boom.notFound('Pengguna tidak ditemukan.');
+ } catch (error) {
+    if (error.isBoom) {
+      return error;
     }
     console.error('Change password error:', error);
     return Boom.internal('Terjadi kesalahan saat mengubah password.');

@@ -43,19 +43,11 @@ exports.plugin = {
     server.route({
       method: 'GET',
       path: '/users/me',
-      handler: getMyProfileHandler,
+      handler: getMyProfileHandler, // Pastikan handler ini benar
       options: {
         auth: 'jwt_strategy',
         tags: ['api', 'Users'],
         description: 'Mendapatkan profil dari pengguna yang sedang login.',
-        response: { 
-          schema: Joi.object({ 
-            id: Joi.string().uuid(),
-            username: Joi.string(),
-            email: Joi.string().email(),
-            created_at: Joi.date().iso(),
-          }).label('UserProfileResponse'),
-        },
       },
     });
 
@@ -75,7 +67,7 @@ exports.plugin = {
       },
     });
 
-        server.route({
+    server.route({
       method: 'PUT',
       path: '/users/me/password',
       handler: changePasswordHandler,
@@ -85,16 +77,14 @@ exports.plugin = {
         description: 'Mengubah password pengguna yang sedang login.',
         validate: {
           payload: Joi.object({
-            oldPassword: Joi.string().required(),
-            newPassword: Joi.string().min(6).required()
-              .disallow(Joi.ref('oldPassword')), 
+            // 'oldPassword' tidak lagi dibutuhkan
+            newPassword: Joi.string().min(6).required(),
             confirmNewPassword: Joi.any().equal(Joi.ref('newPassword')).required()
               .label('Confirm password')
               .messages({ 'any.only': 'Konfirmasi password tidak cocok dengan password baru.' }),
-          }).example({ 
-            oldPassword: "password_lama_anda",
-            newPassword: "PasswordBaru123!",
-            confirmNewPassword: "PasswordBaru123!"
+          }).example({
+            newPassword: "PasswordSangatBaru123!",
+            confirmNewPassword: "PasswordSangatBaru123!"
           }),
         },
       },
