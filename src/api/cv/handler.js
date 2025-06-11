@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const { uploadCvService } = require('./service');
 
 const uploadCvHandler = async (request, h) => {
+  console.log('uploadCvHandler called');
   try {
     const { file } = request.payload;
     // mengambil ID pengguna dari kredensial token JWT yang sudah divalidasi
@@ -20,6 +21,7 @@ const uploadCvHandler = async (request, h) => {
     }).code(201);
 
   } catch (error) {
+    console.log('uploadCvHandler error');
     console.error(error);
     return Boom.internal(error.message);
   }
