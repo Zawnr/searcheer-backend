@@ -57,11 +57,29 @@ const startAnalysisService = async ({ cvId, userId, jobTitle, jobDescription }) 
     throw Boom.badRequest('Analisis gagal dilakukan oleh layanan ML.', analysisResult.errors);
   }
 
+  // 3. Cari job_id berdasarkan jobTitle
+  const { data: jobData, error: jobError } = await supabase
+    .from('jobs')
+    .select('job_id, title')
+    .ilike('title', jobTitle)
+    .order('job_id')
+    .limit(1)
+    .maybeSingle();
+
+  if (jobError || !jobData) {
+    // Debug: tampilkan semua judul job yang ada
+    const { data: allJobs } = await supabase.from('jobs').select('job_id, title');
+    console.error('Job tidak ditemukan. Judul yang ada di database:', allJobs);
+    throw Boom.badRequest('Job dengan judul tersebut tidak ditemukan di database.');
+  }
+  const jobId = jobData.job_id;
+
   // 4. menyimpan Hasil Analisis
   const { data: savedResult, error: saveError } = await supabase
     .from('analysis_results')
     .insert({
       cv_id: cvId,
+      job_id: jobId,
       analyzed_job_title: jobTitle,
       analyzed_job_description: jobDescription,
       result_data: analysisResult.data,
@@ -71,6 +89,7 @@ const startAnalysisService = async ({ cvId, userId, jobTitle, jobDescription }) 
     .single();
 
   if (saveError) {
+    console.error('Supabase saveError:', saveError);
     if (saveError.code === '23505') {
       throw Boom.conflict('CV ini sudah pernah dianalisis untuk pekerjaan ini sebelumnya.');
     }
