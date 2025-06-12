@@ -18,7 +18,7 @@ exports.plugin = {
             username: Joi.string().alphanum().min(3).max(30).required(),
             email: Joi.string().email().required(),
             password: Joi.string().min(6).required(),
-          }),
+          }).label('Register User'),
         },
       },
     });
@@ -35,7 +35,7 @@ exports.plugin = {
           payload: Joi.object({
             email: Joi.string().email().required(),
             password: Joi.string().required(),
-          }),
+          }).label('Login User'),
         },
       },
     });
@@ -43,11 +43,19 @@ exports.plugin = {
     server.route({
       method: 'GET',
       path: '/users/me',
-      handler: getMyProfileHandler, // Pastikan handler ini benar
+      handler: getMyProfileHandler,
       options: {
         auth: 'jwt_strategy',
         tags: ['api', 'Users'],
         description: 'Mendapatkan profil dari pengguna yang sedang login.',
+          response: { 
+            schema: Joi.object({
+              id: Joi.string().uuid(),
+              email: Joi.string().email(),
+              username: Joi.string(),
+              created_at: Joi.date().iso(), 
+            }).label('User Profile') 
+          }
       },
     });
 
@@ -62,7 +70,7 @@ exports.plugin = {
         validate: {
           payload: Joi.object({
             username: Joi.string().alphanum().min(3).max(30).required(),
-          }),
+          }).label('Update Profile'),
         },
       },
     });
@@ -77,7 +85,6 @@ exports.plugin = {
         description: 'Mengubah password pengguna yang sedang login.',
         validate: {
           payload: Joi.object({
-            // 'oldPassword' tidak lagi dibutuhkan
             newPassword: Joi.string().min(6).required(),
             confirmNewPassword: Joi.any().equal(Joi.ref('newPassword')).required()
               .label('Confirm password')
