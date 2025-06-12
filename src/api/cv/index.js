@@ -1,4 +1,4 @@
-// src/api/cv/index.js
+const Joi = require('joi');
 const { uploadCvHandler } = require('./handler');
 
 exports.plugin = {
@@ -19,6 +19,21 @@ exports.plugin = {
           multipart: true,
           maxBytes: 10 * 1024 * 1024,
         },
+        validate: {
+          payload: Joi.object({
+            file: Joi.any()
+              .meta({ swaggerType: 'file' })
+              .description('File CV dalam format PDF yang akan diunggah')
+              .required(),
+          }).label('UploadCVPayload'), 
+        },
+
+        plugins: {
+          'hapi-swagger': {
+            payloadType: 'form' 
+          }
+        }
+
       },
     });
   },
