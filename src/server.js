@@ -7,16 +7,26 @@ const HapiSwagger = require('hapi-swagger');
 const Jwt = require('@hapi/jwt');
 
 const init = async () => {
+    let corsConfig;
+
+  if (process.env.NODE_ENV === 'production') {
+    const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+    corsConfig = {
+      origin: allowedOrigins,
+    };
+    console.log('Server berjalan dalam mode Production. CORS diatur untuk origin:', allowedOrigins);
+  } else {
+      corsConfig = {
+        origin: ['*'],
+    };
+    console.log('Server berjalan dalam mode Development. CORS diatur untuk mengizinkan semua origin (*).');
+  }
+
   const server = Hapi.server({
     port: process.env.PORT || 3000,
     host: process.env.HOST || '0.0.0.0',
     routes: {
-      cors: {
-        // Ganti '*' dengan domain frontend untuk produksi
-        // origin: ['*'],
-        //nanti diganti ke ini kalo sudah deploy
-        origin: [process.env.FRONTEND_URL],
-      },
+        cors: corsConfig,
     },
   });
 
@@ -25,6 +35,7 @@ const init = async () => {
       title: 'Searcheer API Documentation',
       version: '1.0.0',
     },
+    schemes: ['https'],
     // mendefinisikan skema keamanan agar tombol 'Authorize' muncul
     securityDefinitions: {
       bearerAuth: {
