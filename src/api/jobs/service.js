@@ -35,7 +35,6 @@ const getJobById = async (jobId) => {
     .from('jobs')
     .select('*') 
     .eq('job_id', jobId)
-    .eq('fraudulent', false)
     .single(); 
 
   if (error) throw new Error(error.message);

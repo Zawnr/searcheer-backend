@@ -461,7 +461,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # --- Endpoint CV ---
-  /cvs:
+/cvs:
     post:
       tags:
         - CVs
@@ -470,18 +470,19 @@ paths:
       security:
         - bearerAuth: []
       requestBody:
+        description: File PDF yang akan diunggah.
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required:
+                - file
               properties:
                 file:
                   type: string
                   format: binary
                   description: File CV dalam format PDF.
-              required:
-                - file
       responses:
         '201':
           description: CV berhasil diunggah dan data tersimpan.
@@ -497,7 +498,7 @@ paths:
                     type: string
                     example: "CV berhasil diungah."
                   data:
-                    $ref: '#/components/schemas/CV' 
+                    $ref: '#/components/schemas/CV'
         '400':
           description: Request tidak valid (misal, bukan file PDF atau file terlalu besar).
           content:
