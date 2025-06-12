@@ -25,7 +25,7 @@ exports.plugin = {
               .meta({ swaggerType: 'file' })
               .description('File CV dalam format PDF yang akan diunggah')
               .required(),
-          }).label('UploadCVPayload'), 
+          }).label('Upload CV Payload'), 
         },
 
         plugins: {

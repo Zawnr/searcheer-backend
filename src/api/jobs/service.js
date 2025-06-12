@@ -4,8 +4,7 @@ const getAllJobs = async (filters) => {
 
   let query = supabase
     .from('jobs')
-    .select('job_id, title, location, industry, salary_range, employment_type')
-    .eq('fraudulent', false);
+    .select('job_id, title, location, industry, salary_range, employment_type');
 
   // Terapkan filter jika ada
   if (filters.employment_type) {
