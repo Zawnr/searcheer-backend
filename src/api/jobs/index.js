@@ -16,10 +16,11 @@ exports.plugin = {
         notes: 'Mengambil daftar pekerjaan yang tersedia. Mendukung filtering melalui query parameter.',
         validate: {
           query: Joi.object({
-            employment_type: Joi.string().optional(),
-            required_experience: Joi.string().optional(),
+            q: Joi.string().allow('').optional(),
+            employment_type: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())).optional(),
+            required_experience: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())).optional(),
             location: Joi.string().optional(),
-            function: Joi.string().optional(),
+            function: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())).optional(),
           }).optional(),
         },
       },

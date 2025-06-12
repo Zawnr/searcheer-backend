@@ -5,6 +5,7 @@ const getAllJobsHandler = async (request, h) => {
   console.log('getAllJobsHandler called');
   try {
     // Ambil filter dari query string, contoh /jobs?location=New%20York
+    console.log('QUERY DI HANDLER:', request.query);
     const filters = request.query;
     const jobs = await jobService.getAllJobs(filters);
     return h.response(jobs).code(200);
