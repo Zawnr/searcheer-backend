@@ -1,31 +1,40 @@
 const supabase = require('../../lib/supabase');
 
+function escapeLike(str) {
+  return str.replace(/[%_]/g, (m) => '\\' + m);
+}
+
 const getAllJobs = async (filters) => {
+  console.log('Menerima filter:', filters);
+
   let query = supabase
     .from('jobs')
     .select('job_id, title, location, industry, salary_range, employment_type')
-    .eq('fraudulent', false);
 
-  if (filters.q) {
-    query = query.or(`title.ilike.%${filters.q}%,description.ilike.%${filters.q}%`);
+  if (filters.q && typeof filters.q === 'string' && filters.q.trim() !== '') {
+    const safeQ = escapeLike(filters.q.trim());
+    query = query.or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`);
   }
-
   const arrayFilters = ['employment_type', 'required_experience', 'function'];
+
   for (const key of arrayFilters) {
     if (filters[key]) {
       const values = Array.isArray(filters[key]) ? filters[key] : [filters[key]];
       query = query.in(key, values);
     }
   }
-  
-  if (filters.location) {
-    query = query.ilike('location', `%${filters.location}%`);
-  }
-  
-  query = query.limit(50).order('job_id');
 
+  if (filters.location && typeof filters.location === 'string') {
+    query = query.ilike('location', `%${escapeLike(filters.location)}%`);
+  }
+  query = query.order('job_id', { ascending: false }).limit(50);
+  
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Supabase query error:", error);
+    throw new Error(error.message);
+  }
+
   return data;
 };
 
