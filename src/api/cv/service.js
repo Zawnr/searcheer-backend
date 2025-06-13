@@ -1,6 +1,6 @@
 const supabase = require('../../lib/supabase');
 
-const uploadCvService = async ({ file, userId }) => {
+const uploadCvService = async ({ file, userId, originalName }) => {
   const fileName = `${userId}-${Date.now()}.pdf`;
   const filePath = `public/${fileName}`;
 
@@ -23,6 +23,7 @@ const uploadCvService = async ({ file, userId }) => {
     .insert({
       user_id: userId,
       file_path: filePath,
+      original_name: originalName,
     })
     .select()
     .single();
@@ -37,4 +38,17 @@ const uploadCvService = async ({ file, userId }) => {
   return dbData;
 };
 
-module.exports = { uploadCvService };
+const getUserCVsService = async (userId) => {
+  const { data, error } = await supabase
+    .from('cvs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Supabase db error:', error);
+    throw new Error('Gagal mengambil riwayat CV.');
+  }
+  return data;
+};
+
+module.exports = { uploadCvService, getUserCVsService };

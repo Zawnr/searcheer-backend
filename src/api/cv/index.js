@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { uploadCvHandler } = require('./handler');
+const { uploadCvHandler, getUserCVsHandler } = require('./handler');
 
 exports.plugin = {
   name: 'cv-api',
@@ -34,6 +34,17 @@ exports.plugin = {
           }
         }
 
+      },
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/cvs',
+      handler: getUserCVsHandler,
+      options: {
+        auth: 'jwt_strategy',
+        tags: ['api', 'CVs'],
+        description: 'Ambil riwayat upload CV milik user yang sedang login',
       },
     });
   },
