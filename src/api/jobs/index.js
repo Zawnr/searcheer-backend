@@ -1,8 +1,6 @@
 const Joi = require('joi');
 const { getAllJobsHandler, getJobByIdHandler } = require('./handler');
 
-const Joi = require('joi');
-
 exports.plugin = {
   name: 'jobs-api',
   version: '1.0.0',
