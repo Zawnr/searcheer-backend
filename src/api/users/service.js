@@ -16,7 +16,10 @@ const addUser = async ({ email, password, username }) => {
 
 const verifyUser = async ({ email, password }) => {
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-  if (authError) throw Boom.unauthorized(authError.message);
+  if (authError){
+    console.error('[DEBUG-SUPABASE-ERROR] Error saat sign-in:', authError);
+    throw Boom.unauthorized(authError.message);
+  } 
   if (!authData.user) throw Boom.internal('Gagal mendapatkan data pengguna setelah login.');
 
   const { data: profileData, error: profileError } = await supabase.from('users').select('username').eq('id', authData.user.id).single();

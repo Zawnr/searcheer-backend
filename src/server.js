@@ -35,8 +35,6 @@ const init = async () => {
       title: 'Searcheer API Documentation',
       version: '1.0.0',
     },
-    schemes: ['https'],
-    // mendefinisikan skema keamanan agar tombol 'Authorize' muncul
     securityDefinitions: {
       bearerAuth: {
         type: 'apiKey',
@@ -47,6 +45,11 @@ const init = async () => {
     },
     security: [{ bearerAuth: [] }],
   };
+
+  if (process.env.NODE_ENV === 'production') {
+    swaggerOptions.schemes = ['https'];
+    swaggerOptions.host = 'searcheer-api.ddns.net'; 
+  }
 
   // 1. mendaftarkan plugin(Inert, Vision, Jwt)
   await server.register([Inert, Vision, Jwt]);
