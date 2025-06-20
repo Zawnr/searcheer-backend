@@ -166,27 +166,37 @@ const getJobRecommendations = async ({ resultId, userId }) => {
   const compatibilityData = existingResult.result_data.compatibility_analysis;
 
   const payloadForML = {
-    cv_text: existingResult.cv_text,
-    analysis_results: {
-      overall_score: compatibilityData.overall_score,
+  cv_text: existingResult.cv_text,
+  analysis_results: {
+    overall_score: compatibilityData.overall_score,
 
-      skills_analysis: {
-        // Ubah format array skill menjadi [skill, skor]
-        matched_skills: compatibilityData.matched_skills.map(skill => [skill, 1.0]), // Kita beri skor dummy 1.0
-        missing_skills: compatibilityData.missing_skills.map(skill => [skill, 1.0]),
-        skill_match_percentage: compatibilityData.skill_match,
-      }
-    },
-    top_n: 6, 
-  };
+    skills_analysis: {
+      // FIX agar format [skill, skor] dan tidak double array
+      matched_skills: (compatibilityData.matched_skills || []).map(skill => 
+        Array.isArray(skill) && skill.length === 2 ? skill : [skill, 1.0]
+      ),
+      missing_skills: (compatibilityData.missing_skills || []).map(skill => 
+        Array.isArray(skill) && skill.length === 2 ? skill : [skill, 1.0]
+      ),
+      skill_match_percentage: compatibilityData.skill_match,
+    }
+  },
+  top_n: 6, 
+};
 
-  console.log('Mengirim payload FINAL ke API ML:', JSON.stringify(payloadForML, null, 2));
 
-  // 3. Panggil API ML untuk mendapatkan rekomendasi
+  // --- DEBUG LOG: sebelum request ke ML API ---
+  console.log('PAYLOAD ke ML Recommendation API:', JSON.stringify(payloadForML, null, 2));
+
+  // 3. Panggil API ML untuk mendapatkan rekomendasi (PASTIKAN PAKAI JSON!)
   let recommendationsResponse;
   try {
     const mlApiUrl = `${process.env.ML_API_BASE_URL}/api/find-alternative-jobs`;
-    recommendationsResponse = await axios.post(mlApiUrl, payloadForML);
+    recommendationsResponse = await axios.post(mlApiUrl, payloadForML, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    // --- DEBUG LOG: respons ML API ---
+    console.log('RESPON dari ML Recommendation API:', JSON.stringify(recommendationsResponse.data, null, 2));
   } catch (error) {
     console.error('Error saat memanggil API rekomendasi ML:', error.response ? error.response.data : error.message);
     throw Boom.badGateway('Layanan rekomendasi sedang tidak tersedia.');
@@ -194,13 +204,16 @@ const getJobRecommendations = async ({ resultId, userId }) => {
 
   const recommendationsFromML = recommendationsResponse.data?.data?.recommended_jobs;
   if (!recommendationsFromML) {
-    // Jika tidak ada rekomendasi maka akan mengembalikan array kosong
+    console.log('ML tidak mengembalikan recommended_jobs, hasil kosong.');
     return [];
   }
 
   // 4. Proses pencocokan data dengan database
   const recommendedJobIds = recommendationsFromML.map(job => job.job_id).filter(id => id != null);
+  console.log('Job IDs yang direkomendasikan ML:', recommendedJobIds);
+
   if (recommendedJobIds.length === 0) {
+    console.log('Tidak ada job_id direkomendasikan ML.');
     return [];
   }
 
@@ -209,8 +222,10 @@ const getJobRecommendations = async ({ resultId, userId }) => {
     .select('job_id, title, location, industry, salary_range, employment_type')
     .in('job_id', recommendedJobIds);
 
+  // --- DEBUG LOG: hasil jobs dari database ---
+  console.log('DATA JOBS dari database:', jobsFromDb);
   if (dbError) {
-    throw Boom.internal('Gagal mengambil detail pekerjaan rekomendasi dari database.');
+    console.error('DB ERROR jobs:', dbError);
   }
 
   const enrichedRecommendations = jobsFromDb.map(dbJob => {
@@ -223,5 +238,6 @@ const getJobRecommendations = async ({ resultId, userId }) => {
 
   return enrichedRecommendations;
 };
+
 
 module.exports = { startAnalysisService, getAllResultsByCvId, getAnalysisResultById, getJobRecommendations };
